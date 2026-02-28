@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",
+    "build": "npm exec -- vite build",
     "start": "node server.js"
   },
   "engines": {
