@@ -1,0 +1,21 @@
+.container {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, 24px);
+  gap: 2px;
+  justify-content: center;
+}
+
+.cell {
+  width: 24px;
+  height: 24px;
+  background: #222;
+}
+
+.cell.active {
+  background: #00e5ff;
+}
