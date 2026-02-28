@@ -1,0 +1,73 @@
+# Modern Node.js Web App to Linux on Azure
+# Build & deploy Flatris (React + Vite + Express) using Node 20
+
+trigger:
+- main
+
+variables:
+  azureSubscription: 'name'
+  webAppName: 'RameesFlattris'
+  resourceGroupName: 'RameesGroup'
+  environmentName: 'RameesFlattris-dev'
+  vmImageName: 'ubuntu-latest'
+
+stages:
+# -----------------------
+# BUILD / ARCHIVE STAGE
+# -----------------------
+- stage: Build
+  displayName: Build & Archive stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Use Node.js 20'
+
+    - script: |
+        npm install
+        npm run build
+      displayName: 'Install dependencies & build app'
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive application'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+        replaceExistingArchive: true
+
+    - publish: '$(Build.ArtifactStagingDirectory)/app.zip'
+      artifact: drop
+
+# -----------------------
+# DEPLOY STAGE
+# -----------------------
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy to Azure App Service
+    environment: $(environmentName)
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            displayName: 'Deploy Flatris Modern App'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: webAppLinux
+              appName: $(webAppName)
+              runtimeStack: 'NODE|20-lts'
+              startupCommand: 'npm start'
+              package: '$(Pipeline.Workspace)/drop/app.zip'
